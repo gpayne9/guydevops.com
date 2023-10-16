@@ -1,105 +1,45 @@
 ---
-title: Text and Typography
-description: Examples of text, typography, math equations, diagrams, flowcharts, pictures, videos, and more.
-author: cotes
-date: 2019-08-08 11:33:00 +0800
-categories: [Blogging, Demo]
+title: Create and deploy a static site to AWS CloudFront and S3 using Terraform
+author: Guy
+date: 2023-10-15 11:33:00 +0800
+categories: [Terraform, Demo, S3, CloudFront]
 tags: [typography]
 pin: true
 math: true
 mermaid: true
-image:
-  path: /commons/devices-mockup.png
-  lqip: data:image/webp;base64,UklGRpoAAABXRUJQVlA4WAoAAAAQAAAADwAABwAAQUxQSDIAAAARL0AmbZurmr57yyIiqE8oiG0bejIYEQTgqiDA9vqnsUSI6H+oAERp2HZ65qP/VIAWAFZQOCBCAAAA8AEAnQEqEAAIAAVAfCWkAALp8sF8rgRgAP7o9FDvMCkMde9PK7euH5M1m6VWoDXf2FkP3BqV0ZYbO6NA/VFIAAAA
-  alt: Responsive rendering of Chirpy theme on multiple devices.
 ---
 
-## Headings
+<!-- ## Headings -->
 
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable -->
-# H1 — heading
-{: .mt-4 .mb-0 }
+<!-- <h1 class="mt-5">Create and deploy a static site to AWS CloudFront and S3 using Terraform</h1>
 
-## H2 — heading
-{: data-toc-skip='' .mt-4 .mb-0 }
+<h2 data-toc-skip>H2 - heading</h2>
 
 ### H3 — heading
 {: data-toc-skip='' .mt-4 .mb-0 }
 
-#### H4 — heading
-{: data-toc-skip='' .mt-4 }
-<!-- markdownlint-restore -->
+<h4>H4 - heading</h4> -->
 
-## Paragraph
+## Intro
 
-Quisque egestas convallis ipsum, ut sollicitudin risus tincidunt a. Maecenas interdum malesuada egestas. Duis consectetur porta risus, sit amet vulputate urna facilisis ac. Phasellus semper dui non purus ultrices sodales. Aliquam ante lorem, ornare a feugiat ac, finibus nec mauris. Vivamus ut tristique nisi. Sed vel leo vulputate, efficitur risus non, posuere mi. Nullam tincidunt bibendum rutrum. Proin commodo ornare sapien. Vivamus interdum diam sed sapien blandit, sit amet aliquam risus mattis. Nullam arcu turpis, mollis quis laoreet at, placerat id nibh. Suspendisse venenatis eros eros.
+Are you considering creating a blazing-fast, scalable, and cost-efficient website powered by Jekyll, and deploying it using the robust infrastructure as code (IaC) capabilities of Terraform? Look no further! In this guide, I'll walk you through the steps I took to build and deploy my website, guydevops.com, leveraging the power of Terraform, Amazon S3, and CloudFront.
 
-## Lists
+## The Technology Stack
+<span style="font-size: larger;" >Jekyll:</span>
+ is a static site generator that allows you to build simple to complex websites without the need for a traditional server. Its simplicity and flexibility make it an excellent choice for blogs, portfolios, and personal websites.
 
-### Ordered list
+<span style="font-size: larger;" >Terraform:</span> Terraform, an IaC tool by HashiCorp, enables you to define and provision infrastructure using a declarative configuration language. This means you can define your entire infrastructure in code, making it reproducible, version-controlled, and easily managed.
 
-1. Firstly
-2. Secondly
-3. Thirdly
+<span style="font-size: larger;" >Amazon S3:</span>: Amazon Simple Storage Service (S3) is a scalable object storage service. In this setup, S3 is used to host and serve the static content of the Jekyll website.
 
-### Unordered list
+<span style="font-size: larger;" >CloudFront:</span> Amazon CloudFront is a content delivery network (CDN) that securely delivers data, videos, applications, and APIs to customers globally with low-latency and high transfer speeds. CloudFront is employed to cache and distribute the website content, ensuring rapid and reliable access for users around the world.
 
-- Chapter
-  - Section
-    - Paragraph
+## prerequisites
 
-### ToDo list
-
-- [ ] Job
-  - [x] Step 1
-  - [x] Step 2
-  - [ ] Step 3
-
-### Description list
-
-Sun
-: the star around which the earth orbits
-
-Moon
-: the natural satellite of the earth, visible by reflected light from the sun
-
-## Block Quote
-
-> This line shows the _block quote_.
-
-## Prompts
-
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable -->
-> An example showing the `tip` type prompt.
-{: .prompt-tip }
-
-> An example showing the `info` type prompt.
-{: .prompt-info }
-
-> An example showing the `warning` type prompt.
-{: .prompt-warning }
-
-> An example showing the `danger` type prompt.
-{: .prompt-danger }
-<!-- markdownlint-restore -->
-
-## Tables
-
-| Company                      | Contact          | Country |
-| :--------------------------- | :--------------- | ------: |
-| Alfreds Futterkiste          | Maria Anders     | Germany |
-| Island Trading               | Helen Bennett    |      UK |
-| Magazzini Alimentari Riuniti | Giovanni Rovelli |   Italy |
-
-## Links
-
-<http://127.0.0.1:4000>
-
-## Footnote
-
-Click the hook will locate the footnote[^footnote], and here is another footnote[^fn-nth-2].
+1. Ruby 3.2.2+
+2. AWS account and AWS CLI
+3. Terraform
+4. 
 
 ## Inline code
 
@@ -198,3 +138,65 @@ The image below will toggle dark/light mode based on theme preference, notice it
 
 [^footnote]: The footnote source
 [^fn-nth-2]: The 2nd footnote source
+
+
+<!-- ### Ordered list
+
+1. Firstly
+2. Secondly
+3. Thirdly
+
+### Unordered list
+
+- Chapter
+  + Section
+    * Paragraph
+
+### ToDo list
+
+- [ ] Job
+  + [x] Step 1
+  + [x] Step 2
+  + [ ] Step 3
+
+### Description list
+
+Sun
+: the star around which the earth orbits
+
+Moon
+: the natural satellite of the earth, visible by reflected light from the sun
+
+## Block Quote
+
+> This line shows the _block quote_.
+
+## Prompts
+
+> An example showing the `tip` type prompt.
+{: .prompt-tip }
+
+> An example showing the `info` type prompt.
+{: .prompt-info }
+
+> An example showing the `warning` type prompt.
+{: .prompt-warning }
+
+> An example showing the `danger` type prompt.
+{: .prompt-danger }
+
+## Tables
+
+| Company                      | Contact          | Country |
+|:-----------------------------|:-----------------|--------:|
+| Alfreds Futterkiste          | Maria Anders     | Germany |
+| Island Trading               | Helen Bennett    | UK      |
+| Magazzini Alimentari Riuniti | Giovanni Rovelli | Italy   |
+
+## Links
+
+<http://127.0.0.1:4000>
+
+## Footnote
+
+Click the hook will locate the footnote[^footnote], and here is another footnote[^fn-nth-2]. -->
