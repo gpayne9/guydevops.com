@@ -1,6 +1,6 @@
 ---
 title: Create and deploy a static site to AWS CloudFront and S3 using Terraform
-author: Guy
+author: guy
 date: 2023-10-15 11:33:00 +0800
 categories: [Terraform, Demo, S3, CloudFront]
 tags: [typography]
@@ -79,102 +79,263 @@ This guide assumes you already have a domain purchased and a route53 zone set up
 
 3. Run `aws sts get-caller-identity` to confirm your CLI user is properly set up
 
-4. Create an S3 bucket for your Terraform state file to exist  
 ## Setting up Terraform
 
-All of the terraform listed can be found on my GitHub
+All of the terraform listed can be found on my [GitHub](https://github.com/gpayne9/guydevops.com/tree/master/terraform)
+
+1. First we need to set up the ```main.tf``` with the ```required_providers``` and the S3 back end that we set up in step 3 of Setting up the AWS environment. This is just a base terraform file that configures the provider and the s3 remote backend.
+
+```hcl
+
+# Configure the Terraform block
+terraform {
+  # Specify required providers and their versions
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
+  
+  # Configure the backend for remote state storage in an S3 bucket
+  backend "s3" {
+    bucket = "guy-terraform-state"  # Specify the name of the S3 bucket for storing Terraform state
+    key    = "terraform"             # Specify the key (path) within the bucket where the state file will be stored
+    region = "us-east-1"             # Specify the AWS region for the S3 bucket
+  }
+  
+  # Specify the minimum required Terraform version
+  required_version = ">= 1.2.0"
+}
+
+# Configure the AWS provider
+provider "aws" {
+  region = "us-east-1"  # Specify the default AWS region for resource provisioning
+}
+
+```
+2. Now lets create the S3 bucket with s3 website configured. 
+  - The ```aws_s3_bucket_website_configuration``` resource is what enables the index.html to be auto loaded when you navigate through the site.
+  - The ```aws_s3_bucket``` has to be set to public for the S3 website configuration to work however there is a way to lock the s3 bucket down via injecting a header in the Cloud Front distribution. Here is a [StackOverflow](https://stackoverflow.com/questions/55500373/restrict-access-to-s3-static-website-behind-a-cloudfront-distribution) thread about this situation.
+  - The ```secret_header``` variable can be set via either a tfvar file or [other ways of setting environment variables in terraform](https://developer.hashicorp.com/terraform/language/values/variables_). Do not commit this secret header to source control if you want it to be actually secret.
+  - The site deployment to s3 is done via a ```null_resource``` block. This automates the process of copying/synching the files genreated by 
+
+```hcl
+# Define a variable for a secret header (do not commit to source control)
+variable "secret_header" {
+  type    = string
+  default = "secret-header"
+}
+variable "site_path" {
+  type = string
+  default = "~/repos/guydevops.com"
+}
 
 
+# Create an S3 bucket for the website
+resource "aws_s3_bucket" "guydevops-com_s3_bucket" {
+  bucket = "guydevops.com"
+  tags = {
+    Name        = "guydevops"
+    Environment = "prod"
+  }
+}
+
+# Configure the S3 bucket as a website with an index document
+resource "aws_s3_bucket_website_configuration" "guydevops-com_s3_bucket_website" {
+  bucket = aws_s3_bucket.guydevops-com_s3_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+}
+
+# Create an S3 bucket policy to allow public access to the site with a secret header
+resource "aws_s3_bucket_policy" "allow_public_access_to_site" {
+  bucket = aws_s3_bucket.guydevops-com_s3_bucket.id
+  policy = data.aws_iam_policy_document.allow_public_access_to_site_policy.json
+}
+
+# Define an IAM policy document to allow public access with a specific referer header
+data "aws_iam_policy_document" "allow_public_access_to_site_policy" {
+  statement {
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:GetObject"]
+
+    resources = [
+      aws_s3_bucket.guydevops-com_s3_bucket.arn,
+      "${aws_s3_bucket.guydevops-com_s3_bucket.arn}/*",
+    ]
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:Referer"
+      values   = ["${var.secret_header}"]
+    }
+  }
+}
+
+resource "null_resource" "remove_and_upload_to_s3" {
+  provisioner "local-exec" {
+    command = "aws s3 sync ${var.site_path}/_site s3://${aws_s3_bucket.guydevops-com_s3_bucket.id}"
+  }
+}
 
 
-## Filepath
-
-Here is the `/path/to/the/file.extend`{: .filepath}.
-
-## Code blocks
-
-### Common
-
-```text
-This is a common code snippet, without syntax highlight and line number.
 ```
 
-### Specific Language
+3. Now lets create the ACM SSL certificate and use DNS validation. The ```aws_route53_zone``` can be imported via a terraform data lookup.
 
-```bash
-if [ $? -ne 0 ]; then
-  echo "The command was not successful.";
-  #do the needful / exit
-fi;
+``` hcl
+# Define a data source to get information about an existing Route 53 hosted zone
+data "aws_route53_zone" "guydevops_zone" {
+  name = "guydevops.com"
+}
+
+# Define an ACM (AWS Certificate Manager) certificate for guydevops.com
+resource "aws_acm_certificate" "guydevops_cert" {
+  domain_name       = "guydevops.com"
+  validation_method = "DNS"  # Use DNS validation for the certificate
+
+  tags = {
+    Name = "guydevops.com"
+  }
+}
+
+# Define Route 53 records for certificate validation
+resource "aws_route53_record" "guydevops_cert_record" {
+  for_each = {
+    for dvo in aws_acm_certificate.guydevops_cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.guydevops_zone.zone_id
+}
+
+# Define ACM certificate validation
+resource "aws_acm_certificate_validation" "guydevops_cert_validation" {
+  certificate_arn         = aws_acm_certificate.guydevops_cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.guydevops_cert_record : record.fqdn]
+}
+
 ```
 
-### Specific filename
+4. Finally lets create the CloudFront Distrubution
 
-```sass
-@import
-  "colors/light-typography",
-  "colors/dark-typography";
+```hcl
+
+# Define an AWS CloudFront distribution resource
+resource "aws_cloudfront_distribution" "guydevops_cf_dis" {
+  # Define the origin settings for the CloudFront distribution
+  origin {
+    domain_name = aws_s3_bucket_website_configuration.guydevops-com_s3_bucket_website.website_endpoint
+    origin_id   = "S3Origin"
+
+    # Configure custom origin settings for an S3 bucket
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_keepalive_timeout = 5
+      origin_protocol_policy   = "http-only"
+      origin_read_timeout      = 30
+      origin_ssl_protocols     = ["TLSv1.2"]
+    }
+
+    # Add a custom header for the origin
+    custom_header {
+      name  = "Referer"
+      value = var.secret_header
+    }
+  }
+
+  # Enable the CloudFront distribution
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+
+  # Set aliases (alternate domain names) for the distribution
+  aliases = ["guydevops.com"]
+
+  # Configure the default cache behavior for the distribution
+  default_cache_behavior {
+    target_origin_id       = "S3Origin"
+    viewer_protocol_policy = "redirect-to-https"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
+  # Configure an ordered cache behavior for the distribution
+  ordered_cache_behavior {
+    path_pattern           = "/*"
+    target_origin_id       = "S3Origin"
+    viewer_protocol_policy = "redirect-to-https"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
+  # Configure the SSL certificate and protocol settings for the distribution
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate.guydevops_cert.arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2018"
+  }
+
+  # Configure restrictions for the distribution based on geo-location
+  restrictions {
+    geo_restriction {
+      restriction_type = "whitelist"
+      locations        = ["US", "CA", "GB", "DE"]
+    }
+  }
+}
+
+# Define an AWS Route 53 record resource for the domain
+resource "aws_route53_record" "guydevops_record" {
+  name    = "guydevops.com"
+  type    = "A"
+  zone_id = data.aws_route53_zone.guydevops_zone.zone_id
+
+  # Configure an alias for the Route 53 record pointing to the CloudFront distribution
+  alias {
+    name                   = aws_cloudfront_distribution.guydevops_cf_dis.domain_name
+    zone_id                = aws_cloudfront_distribution.guydevops_cf_dis.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 ```
-{: file='_sass/jekyll-theme-chirpy.scss'}
-
-## Mathematics
-
-The mathematics powered by [**MathJax**](https://www.mathjax.org/):
-
-$$
-\begin{equation}
-  \sum_{n=1}^\infty 1/n^2 = \frac{\pi^2}{6}
-  \label{eq:series}
-\end{equation}
-$$
-
-We can reference the equation as \eqref{eq:series}.
-
-When $a \ne 0$, there are two solutions to $ax^2 + bx + c = 0$ and they are
-
-$$ x = {-b \pm \sqrt{b^2-4ac} \over 2a} $$
-
-## Mermaid SVG
-
-```mermaid
- gantt
-  title  Adding GANTT diagram functionality to mermaid
-  apple :a, 2017-07-20, 1w
-  banana :crit, b, 2017-07-23, 1d
-  cherry :active, c, after b a, 1d
-```
-
-## Images
-
-### Default (with caption)
-
-![Desktop View](/posts/20190808/mockup.png){: width="972" height="589" }
-_Full screen width and center alignment_
-
-### Left aligned
-
-![Desktop View](/posts/20190808/mockup.png){: width="972" height="589" .w-75 .normal}
-
-### Float to left
-
-![Desktop View](/posts/20190808/mockup.png){: width="972" height="589" .w-50 .left}
-Praesent maximus aliquam sapien. Sed vel neque in dolor pulvinar auctor. Maecenas pharetra, sem sit amet interdum posuere, tellus lacus eleifend magna, ac lobortis felis ipsum id sapien. Proin ornare rutrum metus, ac convallis diam volutpat sit amet. Phasellus volutpat, elit sit amet tincidunt mollis, felis mi scelerisque mauris, ut facilisis leo magna accumsan sapien. In rutrum vehicula nisl eget tempor. Nullam maximus ullamcorper libero non maximus. Integer ultricies velit id convallis varius. Praesent eu nisl eu urna finibus ultrices id nec ex. Mauris ac mattis quam. Fusce aliquam est nec sapien bibendum, vitae malesuada ligula condimentum.
-
-### Float to right
-
-![Desktop View](/posts/20190808/mockup.png){: width="972" height="589" .w-50 .right}
-Praesent maximus aliquam sapien. Sed vel neque in dolor pulvinar auctor. Maecenas pharetra, sem sit amet interdum posuere, tellus lacus eleifend magna, ac lobortis felis ipsum id sapien. Proin ornare rutrum metus, ac convallis diam volutpat sit amet. Phasellus volutpat, elit sit amet tincidunt mollis, felis mi scelerisque mauris, ut facilisis leo magna accumsan sapien. In rutrum vehicula nisl eget tempor. Nullam maximus ullamcorper libero non maximus. Integer ultricies velit id convallis varius. Praesent eu nisl eu urna finibus ultrices id nec ex. Mauris ac mattis quam. Fusce aliquam est nec sapien bibendum, vitae malesuada ligula condimentum.
-
-### Dark/Light mode & Shadow
-
-The image below will toggle dark/light mode based on theme preference, notice it has shadows.
-
-![light mode only](/posts/20190808/devtools-light.png){: .light .w-75 .shadow .rounded-10 w='1212' h='668' }
-![dark mode only](/posts/20190808/devtools-dark.png){: .dark .w-75 .shadow .rounded-10 w='1212' h='668' }
-
-## Video
-
-{% include embed/youtube.html id='Balreaj8Yqs' %}
 
 ## Reverse Footnote
 
