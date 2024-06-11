@@ -99,6 +99,24 @@ Static assets configuration was introduced in version `5.1.0`. The CDN of the st
 
 If you prefer to self-host the static assets, refer to the [_chirpy-static-assets_](https://github.com/cotes2020/chirpy-static-assets#readme) repository.
 
+
+You may want to preview the site contents before publishing, so just run it by:
+
+```console
+$ bundle exec jekyll s
+```
+
+Or run the site on Docker with the following command:
+
+```console
+$ docker run -it --rm \
+    --volume="$PWD:/srv/jekyll" \
+    -p 4000:4000 jekyll/jekyll \
+    jekyll serve
+```
+
+After a few seconds, the local service will be published at _<http://127.0.0.1:4000>_.
+
 ## Deployment
 
 Before deploying, check the `_config.yml`{: .filepath} file and ensure the `url` is configured correctly. If you prefer a [**project site**](https://help.github.com/en/github/working-with-github-pages/about-github-pages#types-of-github-pages-sites) and don't use a custom domain, or if you want to visit your website with a base URL on a web server other than **GitHub Pages**, remember to set the `baseurl` to your project name, starting with a slash, e.g., `/project-name`.
