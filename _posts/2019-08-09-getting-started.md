@@ -78,6 +78,7 @@ Also, if you'd like to self-host the static assets, please refer to the [_chirpy
 
 ### Running Local Server
 
+
 You may want to preview the site contents before publishing, so just run it by:
 
 ```console
