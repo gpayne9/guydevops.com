@@ -11,6 +11,14 @@ lang: en
 # Change to your timezone › http://www.timezoneconverter.com/cgi-bin/findzone/findzone
 timezone: America/New_York
 
+plugins:
+  - jekyll-seo-tag
+
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  math_engine: mathjax
+
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
@@ -40,7 +48,7 @@ social:
     - https://github.com/gpayne9 # change to your github homepage
     # Uncomment below to add more social links
     # - https://www.facebook.com/username
-    # - https://www.linkedin.com/in/username
+    - https://www.linkedin.com/in/guy-p-devops/
 
 # Site Verification Settings
 webmaster_verifications:
