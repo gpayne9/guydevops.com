@@ -22,12 +22,12 @@ kramdown:
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: Guy's DevOps Blog # the main title
+title: Guy's DevOps Site # the main title
 
-tagline: A blog created by Guy Payne to share DevOps information, ideas, and projects # it will display as the sub-title
+tagline: A site created by Guy Payne to share DevOps information, ideas, and projects # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
-  A blog created by Guy Payne to share DevOps information, ideas, and projects
+  A site created by Guy Payne to share DevOps information, ideas, and projects
 
 # fill in the protocol & hostname for your site, e.g., 'https://username.github.io'
 url: "guydevops.com"

@@ -77,8 +77,8 @@ resource "aws_cloudfront_distribution" "guydevops_cf_dis" {
   # Configure restrictions for the distribution based on geo-location
   restrictions {
     geo_restriction {
-      restriction_type = "whitelist"
-      locations        = ["US", "CA", "GB", "DE"]
+      restriction_type = "blacklist"
+      locations        = ["RU", "CN", "KP", "IR"]
     }
   }
 }

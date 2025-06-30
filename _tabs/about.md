@@ -3,13 +3,13 @@
 icon: fas fa-info-circle
 order: 4
 ---
-## Hey there!
+## Hello!
 
-I'm **Guy Payne**, a Senior DevOps Engineer at LendingTree with a passion for building scalable, reliable infrastructure and sharing knowledge with the DevOps community.
+I'm **Guy Payne**, a Senior DevOps Engineer at LendingTree. I spend my days building scalable, reliable infrastructure and figured I'd document what I learn along the way.
 
 ### <i class="fas fa-rocket"></i> What I Do
 
-As a Senior DevOps Engineer, I specialize in cloud infrastructure, security, and automation across multi-cloud environments. My expertise spans:
+Most of my work involves cloud infrastructure, security, and automation across multi-cloud environments. Here's what I work with daily:
 
 - **AWS Multi-Account Architecture** - Managing complex AWS Organizations with multiple production accounts, CloudFront CDN distributions, Lambda functions, and cross-account networking
 - **Security & Identity Management** - AWS WAF configurations, AWS IAM policy management, Identity Center (SSO), KMS encryption, SailPoint integrations, and certificate lifecycle management
@@ -49,9 +49,9 @@ My hands-on experience includes:
   </div>
 </div>
 
-### <i class="fas fa-pen-alt"></i> Why I Blog
+### <i class="fas fa-pen-alt"></i> Why I Write
 
-This blog is my way of giving back to the DevOps community that has taught me so much. You'll find:
+I write about the stuff I'm working on and problems I've solved. You'll find:
 
 - **Step-by-step tutorials** for real-world DevOps challenges
 - **Architecture deep-dives** with practical examples and code
@@ -63,7 +63,7 @@ This blog is my way of giving back to the DevOps community that has taught me so
 
 ### <i class="fas fa-lightbulb"></i> My Philosophy
 
-I believe in **Infrastructure as Code**, **automation over manual processes**, and **sharing knowledge openly**. Every post aims to be practical, tested, and immediately actionable.
+I'm big on **Infrastructure as Code** and **automation over manual processes**. If I can script it, I will. Every post includes working code that I've actually tested.
 
 ### <i class="fas fa-handshake"></i> Let's Connect
 
@@ -73,7 +73,7 @@ I believe in **Infrastructure as Code**, **automation over manual processes**, a
 
 ---
 
-*Thanks for stopping by! If you find my content helpful, feel free to connect or share it with others who might benefit.*
+*Thanks for reading! Hit me up if you have questions or want to chat about DevOps stuff.*
 
 <!-- > Add Markdown syntax content to file `_tabs/about.md`{: .filepath } and it will show up on this page.
 {: .prompt-tip } -->

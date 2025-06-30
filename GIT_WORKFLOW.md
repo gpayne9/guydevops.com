@@ -1,4 +1,4 @@
-# Git Workflow for Personal Blog
+# Git Workflow for Personal Site
 
 This repository is a fork of the Jekyll Chirpy theme with git hooks removed for personal use.
 
@@ -12,7 +12,7 @@ This repository is a fork of the Jekyll Chirpy theme with git hooks removed for 
 ### Regular Commits (Your Content)
 ```bash
 git add .
-git commit -m "Add new blog post about AWS S3 and CloudFront"
+git commit -m "Add new post about AWS S3 and CloudFront"
 git push origin main
 ```
 

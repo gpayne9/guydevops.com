@@ -1,5 +1,5 @@
 ---
-title: "Host a Lightning‑Fast Jekyll Blog on AWS with Terraform, S3 & CloudFront"
+title: "Host a Lightning‑Fast Jekyll Site on AWS with Terraform, S3 & CloudFront"
 description: "Comprehensive, step‑by‑step guide to building and deploying a secure, globally‑distributed Jekyll website using Terraform, Amazon S3, CloudFront, and Route 53 — complete with diagrams and visuals."
 date: 2025-06-29
 mermaid: true   
@@ -97,7 +97,7 @@ categories: [DevOps, Tutorials, AWS, Infrastructure]
 
 **Key Benefits:**
 - <i class="fas fa-globe" style="color: #17a2b8;"></i> **Global CDN**: CloudFront serves from 400+ edge locations
-- <i class="fas fa-dollar-sign" style="color: #28a745;"></i> **Cost-effective**: ~$2/month for most personal blogs
+- <i class="fas fa-dollar-sign" style="color: #28a745;"></i> **Cost-effective**: ~$2/month for most personal sites
 - <i class="fas fa-shield-alt" style="color: #dc3545;"></i> **Secure**: Free SSL certificates with auto-renewal
 - <i class="fas fa-chart-line" style="color: #6f42c1;"></i> **Scalable**: Handles traffic spikes automatically
 - <i class="fas fa-tools" style="color: #fd7e14;"></i> **Infrastructure as Code**: Everything version-controlled
@@ -144,9 +144,12 @@ categories: [DevOps, Tutorials, AWS, Infrastructure]
 ---
 
 ## 3  Infrastructure as Code
-Below are trimmed versions of the live `.tf` files. Clone [the full repo](https://github.com/gpayne9/guydevops.com) for context.
+Here are the key Terraform files. You can grab the complete versions from [my repo](https://github.com/gpayne9/guydevops.com/tree/master/terraform).
 
-### main.tf
+<details>
+<summary><strong>main.tf</strong></summary>
+
+<div markdown="1">
 
 ```hcl
 terraform {
@@ -169,12 +172,18 @@ provider "aws" {
 }
 ```
 
-### s3.tf — Static‑Site Bucket (existing name preserved)
+</div>
+</details>
+
+<details>
+<summary><strong>s3.tf — Static‑Site Bucket (existing name preserved)</strong></summary>
+
+<div markdown="1">
 
 ```hcl
 variable "secret_header" {
   type    = string
-  default = "secret-header"   # <i class="fas fa-key"></i> keep secret
+  default = "secret-header"   # keep secret this is to prevent direct access to the bucket
 }
 
 variable "site_path" {
@@ -223,7 +232,13 @@ resource "null_resource" "remove_and_upload_to_s3" {
 }
 ```
 
-### acm_cert.tf
+</div>
+</details>
+
+<details>
+<summary><strong>acm_cert.tf</strong></summary>
+
+<div markdown="1">
 
 ```hcl
 data "aws_route53_zone" "guydevops_zone" { name = "guydevops.com" }
@@ -255,6 +270,9 @@ resource "aws_acm_certificate_validation" "guydevops_cert_validation" {
   validation_record_fqdns = [for r in aws_route53_record.guydevops_cert_record : r.fqdn]
 }
 ```
+
+</div>
+</details>
 
 ### cloudfront.tf
 
@@ -297,8 +315,8 @@ resource "aws_cloudfront_distribution" "guydevops_cf_dis" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "whitelist"
-      locations        = ["US", "CA", "GB", "DE"]
+      restriction_type = "blacklist"
+      locations        = ["RU", "CN", "KP", "IR"]
     }
   }
 }
@@ -343,7 +361,7 @@ Add a GitHub Actions workflow that:
 <div align="center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin: 1rem 0;">
   <h3 style="color: white; margin: 0 0 1rem 0;"><i class="fas fa-dollar-sign"></i> Ultra-Low Cost Hosting</h3>
   <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">< $2/month</div>
-  <div style="opacity: 0.9;">For most personal blogs & portfolios</div>
+  <div style="opacity: 0.9;">For most personal sites & portfolios</div>
 </div>
 
 **Monthly cost breakdown:**
@@ -357,21 +375,21 @@ Add a GitHub Actions workflow that:
 
 ---
 
-## Conclusion <i class="fas fa-trophy"></i>
+## Wrapping Up <i class="fas fa-trophy"></i>
 
 <div align="center" style="background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.3); padding: 2rem; border-radius: 12px; margin: 2rem 0;">
-  <h3 style="color: #28a745; margin-top: 0;"><i class="fas fa-rocket"></i> Mission Accomplished!</h3>
-  <p style="color: var(--text-color, #333);">You've built a <strong>secure, CDN‑accelerated Jekyll blog</strong> that delivers enterprise-grade performance at hobby-project costs.</p>
+  <h3 style="color: #28a745; margin-top: 0;"><i class="fas fa-rocket"></i> That's a Wrap!</h3>
+  <p style="color: var(--text-color, #333);">Your Jekyll site is now running on a <strong>secure, CDN‑accelerated stack</strong> that delivers enterprise-grade performance for under $2/month.</p>
 </div>
 
-### <i class="fas fa-check-circle" style="color: #28a745;"></i> What You've Achieved:
-You’ve built a **secure, CDN‑accelerated Jekyll blog** that:
+### <i class="fas fa-check-circle" style="color: #28a745;"></i> What We Built:
+You’ve built a **secure, CDN‑accelerated Jekyll site** that:
 
-<i class="fas fa-check" style="color: #28a745;"></i> **Scales globally** — CloudFront serves content from 400+ edge locations
-<i class="fas fa-check" style="color: #28a745;"></i> **Costs pennies** — Under $2/month for most personal blogs
-<i class="fas fa-check" style="color: #28a745;"></i> **Zero maintenance** — No servers to patch or monitor
-<i class="fas fa-check" style="color: #28a745;"></i> **Version controlled** — Infrastructure and content both in Git
-<i class="fas fa-check" style="color: #28a745;"></i> **HTTPS everywhere** — Free SSL certificates with auto-renewal
+- **Global reach** — CloudFront serves content from 400+ edge locations worldwide
+- **Dirt cheap hosting** — Under $2/month for most personal sites
+- **Zero server maintenance** — No patching, no monitoring, no headaches
+- **Everything in Git** — Infrastructure and content both version controlled
+- **SSL by default** — Free certificates that renew automatically
 
 ### Next Steps
 - **Custom domain**: Add `www.guydevops.com` as an alias in CloudFront
@@ -387,5 +405,5 @@ You’ve built a **secure, CDN‑accelerated Jekyll blog** that:
 
 ---
 
-*Happy blogging! <i class="fas fa-rocket"></i> Questions? Find me on [GitHub](https://github.com/gpayne9) or [LinkedIn](https://linkedin.com/in/guypayne9).*
+*Questions or run into issues? Hit me up on [GitHub](https://github.com/gpayne9) or [LinkedIn](https://linkedin.com/in/guypayne9). <i class="fas fa-rocket"></i>*
 
