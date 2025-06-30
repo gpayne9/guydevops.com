@@ -144,7 +144,7 @@ categories: [DevOps, Tutorials, AWS, Infrastructure]
 ---
 
 ## 3  Infrastructure as Code
-Here are the key Terraform files. You can grab the complete versions from [my repo](https://github.com/gpayne9/guydevops.com/tree/master/terraform).
+Here are the key Terraform files. You can grab the complete versions from [my repo](https://github.com/gpayne9/guydevops.com/tree/c83d1761ea1f453e7167c5e36449f4d56a26793c/terraform).
 
 <details>
 <summary><strong>main.tf</strong></summary>
