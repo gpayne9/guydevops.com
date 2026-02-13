@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - "terraform/**"
+      - ".gitignore"
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - "terraform/**"
+      - ".gitignore"
+
+jobs:
+  build-and-test:
+    name: Build Jekyll Site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for posts's lastmod
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2.2"
+          bundler-cache: true
+
+      - name: Build Jekyll Site
+        run: JEKYLL_ENV=production bundle exec jekyll build
+
+      - name: Test Site
+        run: bash tools/test.sh
+
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2.2"
+          bundler-cache: true
+
+      - name: Lint Markdown
+        run: |
+          npm install -g markdownlint-cli
+          markdownlint _posts/ _tabs/ --ignore README.md || true
+
+      - name: Check Jekyll Configuration
+        run: bundle exec jekyll doctor

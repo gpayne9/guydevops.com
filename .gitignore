@@ -1,0 +1,61 @@
+# Bundler cache
+.bundle
+vendor
+Gemfile.lock
+
+# Jekyll cache
+.jekyll-cache
+.jekyll-metadata
+_site
+
+# RubyGems
+*.gem
+
+# IDE configurations
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# macOS
+.DS_Store
+
+# Terraform
+.terraform
+**/.terraform/*
+.terraform.d
+.terraformrc
+terraform.rc
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+terraform/.terraform.lock.hcl
+*.plan
+
+# Credentials / secrets
+.boto
+credentials.json
+.netrc
+.ssh
+.aws/
+
+# Misc
+.ansible
+.azure/
+.bash_history
+.cache
+*.code-workspace
+.config
+.gitconfig
+.local
+.sentinel
+.terrascan
+authcodes
+crash.log
+init-cfg.txt
+temp
+tmp
