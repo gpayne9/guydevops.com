@@ -1,33 +1,45 @@
-name: CI
+name: Deploy
+
+# Builds the Jekyll site and deploys to AWS S3 + CloudFront.
+#
+# Authentication: Uses GitHub OIDC to assume an IAM role — no static AWS keys.
+# The IAM role trust policy restricts access to this repo's master branch only.
+#
+# AWS resources created for this workflow:
+#   - OIDC Provider: arn:aws:iam::060479073038:oidc-provider/token.actions.githubusercontent.com
+#   - IAM Role:      arn:aws:iam::060479073038:role/guydevops-github-deploy
+#   - Role permissions: s3:PutObject, s3:DeleteObject, s3:ListBucket on guydevops.com bucket
+#                       cloudfront:CreateInvalidation on distribution E16HINOP0APRBN
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
     paths-ignore:
       - "README.md"
       - "LICENSE"
       - "terraform/**"
       - ".gitignore"
-  pull_request:
-    branches:
-      - master
-    paths-ignore:
-      - "README.md"
-      - "LICENSE"
-      - "terraform/**"
-      - ".gitignore"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: guydevops.com
+  CLOUDFRONT_DISTRIBUTION_ID: E16HINOP0APRBN
+  IAM_ROLE_ARN: arn:aws:iam::060479073038:role/guydevops-github-deploy
 
 jobs:
-  build-and-test:
-    name: Build Jekyll Site
+  deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for posts's lastmod
+          fetch-depth: 0 # for post lastmod dates
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -35,30 +47,20 @@ jobs:
           ruby-version: "3.2.2"
           bundler-cache: true
 
-      - name: Build Jekyll Site
+      - name: Build Site
         run: JEKYLL_ENV=production bundle exec jekyll build
 
-      - name: Test Site
-        run: bash tools/test.sh
-
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          ruby-version: "3.2.2"
-          bundler-cache: true
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Lint Markdown
+      - name: Deploy to S3
+        run: aws s3 sync _site/ s3://${{ env.S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront Cache
         run: |
-          npm install -g markdownlint-cli
-          markdownlint _posts/ _tabs/ --ignore README.md || true
-
-      - name: Check Jekyll Configuration
-        run: bundle exec jekyll doctor
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

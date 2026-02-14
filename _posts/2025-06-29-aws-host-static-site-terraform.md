@@ -1,9 +1,8 @@
 ---
-title: "Host a Lightning‑Fast Jekyll Site on AWS with Terraform, S3 & CloudFront"
-description: "Comprehensive, step‑by‑step guide to building and deploying a secure, globally‑distributed Jekyll website using Terraform, Amazon S3, CloudFront, and Route 53 — complete with diagrams and visuals."
+title: "Hosting a Jekyll Site on AWS with Terraform, S3 & CloudFront"
+description: "How I set up guydevops.com — a Jekyll blog served from S3 behind CloudFront, provisioned with Terraform. Runs for under $2/month."
 date: 2025-06-29
-mermaid: true   
-tags: [Jekyll, Terraform, AWS, S3, CloudFront, Route53, Static Site, DevOps, Infrastructure as Code, CDN, SSL Certificate, ACM, Web Hosting, Cloud Architecture, Cost Optimization, Performance, Security, Automation, CI/CD, GitHub Actions, Domain Management, DNS, HTTPS, Static Site Generator, Serverless, AWS CLI, Ruby, Markdown, Blog Hosting, Website Deployment]
+tags: [Jekyll, Terraform, AWS, S3, CloudFront, Route53, DevOps, Infrastructure as Code, ACM, Static Site]
 categories: [DevOps, Tutorials, AWS, Infrastructure]
 ---
 
@@ -25,126 +24,97 @@ categories: [DevOps, Tutorials, AWS, Infrastructure]
   </div>
 </div>
 
-> **Goal:** Serve <https://guydevops.com> from a **zero‑maintenance** static stack that costs pennies a month yet scales to millions of page views.
+This is how I set up [guydevops.com](https://guydevops.com) — a Jekyll blog sitting in an S3 bucket, served through CloudFront, with DNS and TLS handled by Route 53 and ACM. Everything is provisioned with Terraform and the whole thing costs under $2/month.
+
+## Why This Setup
+
+| Problem | How this stack handles it |
+|---|---|
+| Patching, scaling, paying for servers | Jekyll produces static HTML. No servers to manage. |
+| Click-ops and config drift | Terraform codifies the infrastructure. Version-controlled and reviewable. |
+| Slow loads for visitors far from origin | CloudFront caches at 400+ edge locations. |
+| TLS certificate renewals | ACM issues free certs and auto-renews them. |
+| Vendor lock-in | It's static files. Move them to Netlify, Vercel, or anywhere else whenever. |
 
 ---
 
-## Why This Architecture?
-
-| Pain Point                                   | How the Stack Solves It                                                       |
-| -------------------------------------------- | ----------------------------------------------------------------------------- |
-| **Patching, scaling, or paying for servers** | **Jekyll** produces plain HTML; no servers to manage.                         |
-| **Repetitive click-ops & drift**             | **Terraform** codifies infrastructure (version-controlled, reviewable).       |
-| **Global latency & SEO ranking**             | **CloudFront** caches content at 400+ PoPs → lightning TTFB.                  |
-| **TLS certificate renewals**                 | **ACM** issues & auto-renews free certificates.                               |
-| **Vendor lock-in**                           | Static assets can be migrated anywhere (Netlify, Vercel, Azure Blob Storage…) |
-
----
-
-## High‑Level Architecture <i class="fas fa-sitemap"></i>
-
-<div align="center" style="background: rgba(23, 162, 184, 0.1); border: 1px solid rgba(23, 162, 184, 0.3); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-  <strong style="color: #17a2b8;"><i class="fas fa-bullseye"></i> High-Performance Static Site Architecture</strong>
-</div>
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           🌐 User Browser                                   │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │
-                          │ 1. DNS Query (guydevops.com)
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        📍 Route 53 (DNS)                                   │
-│                    Returns CloudFront IP                                   │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │
-                          │ 2. HTTPS Request
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      🚀 CloudFront (CDN)                                   │
-│                   400+ Global Edge Locations                               │
-│                     ├─ 🔒 ACM Certificate                                  │
-│                     └─ Cache: HTML, CSS, JS, Images                        │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │
-                          │ 3. Origin Request (cache miss)
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       🪣 S3 Static Website                                 │
-│                      Static Files: Jekyll Build                            │
-│                    index.html, assets/, _site/                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                    User Browser                       │
+└──────────────┬───────────────────────────────────────┘
+               │ 1. DNS Query (guydevops.com)
+               ▼
+┌──────────────────────────────────────────────────────┐
+│              Route 53 (DNS)                           │
+│              Returns CloudFront IP                    │
+└──────────────┬───────────────────────────────────────┘
+               │ 2. HTTPS Request
+               ▼
+┌──────────────────────────────────────────────────────┐
+│            CloudFront (CDN)                           │
+│            400+ Edge Locations                        │
+│            TLS via ACM Certificate                    │
+└──────────────┬───────────────────────────────────────┘
+               │ 3. Origin fetch (cache miss only)
+               ▼
+┌──────────────────────────────────────────────────────┐
+│            S3 Bucket (Static Website)                 │
+│            Jekyll _site/ output                       │
+└──────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      🏗️  Terraform Management                              │
-│                                                                             │
-│  Terraform CLI/CI  ──────────────┐                                         │
-│         │                        │                                         │
-│         │                        ▼                                         │
-│         │                 📦 S3 Remote State                               │
-│         │                                                                  │
-│         └─── Creates & Manages ───┐                                        │
-│                                   │                                        │
-│              ┌────────────────────┼────────────────────┐                   │
-│              │                    │                    │                   │
-│              ▼                    ▼                    ▼                   │
-│         Route 53              CloudFront              S3                   │
-│                                   │                                        │
-│                                   └─── 🔒 ACM Certificate                  │
-└─────────────────────────────────────────────────────────────────────────────┘
+Terraform manages all of the above.
+State stored in a separate S3 bucket.
 ```
 
-**Key Benefits:**
-- <i class="fas fa-globe" style="color: #17a2b8;"></i> **Global CDN**: CloudFront serves from 400+ edge locations
-- <i class="fas fa-dollar-sign" style="color: #28a745;"></i> **Cost-effective**: ~$2/month for most personal sites
-- <i class="fas fa-shield-alt" style="color: #dc3545;"></i> **Secure**: Free SSL certificates with auto-renewal
-- <i class="fas fa-chart-line" style="color: #6f42c1;"></i> **Scalable**: Handles traffic spikes automatically
-- <i class="fas fa-tools" style="color: #fd7e14;"></i> **Infrastructure as Code**: Everything version-controlled
-
-*All resources are created in **us‑east‑1** to satisfy CloudFront's ACM regional requirement.*
+Everything lives in **us-east-1** because CloudFront requires ACM certificates in that region.
 
 ---
 
-## Prerequisites <i class="fas fa-wrench"></i>
-- **Ruby 3.1 / 3.2** (recommended) — *3.3+ splits stdlib; Jekyll 4.x still assumes built‑in `csv`.*
-- AWS account with basic IAM familiarity
-- AWS CLI & Terraform ≥ 1.2 installed
-- Git & GitHub
-- A registered domain and a Route 53 hosted zone (e.g., `guydevops.com`)
+## Prerequisites
+
+- Ruby 3.1 or 3.2 — 3.3+ has stdlib changes that break Jekyll 4.x
+- AWS account with IAM access
+- AWS CLI and Terraform >= 1.2
+- A registered domain with a Route 53 hosted zone
 
 ---
 
-## 1  Create the Jekyll Site (Chirpy Theme)
-1. **Fork** the [Chirpy starter](https://github.com/cotes2020/jekyll-theme-chirpy) (or clone directly).
-2. Install dependencies & preview locally:
-   ```bash
-   git clone https://github.com/<YOU>/<REPO>.git && cd <REPO>
-   rbenv local 3.2.2          # if you downgraded Ruby
-   gem install bundler jekyll
-   bundle install
-   bundle exec jekyll s       # http://127.0.0.1:4000
-   ```
-3. Edit `_config.yml` (site title, description, social links) and write posts in `_posts/` using Markdown.
-4. Generate static HTML:
-   ```bash
-   jekyll build               # outputs → _site/
-   ```
+## 1. Create the Jekyll Site
 
-> **Tip:** Commit the `_site` directory to `.gitignore`; we’ll sync it directly to S3 via Terraform or CI.
+I use the [Chirpy theme](https://github.com/cotes2020/jekyll-theme-chirpy) as a gem dependency. Get it running locally first:
 
----
+```bash
+git clone https://github.com/<YOU>/<REPO>.git && cd <REPO>
+gem install bundler jekyll
+bundle install
+bundle exec jekyll serve   # verify at http://127.0.0.1:4000
+```
 
-## 2  Prepare AWS for Remote State
-1. **Create a private S3 bucket** called `guy-terraform-state`.
-2. Enable **versioning** for state history.
-3. (Optional) Create a DynamoDB table for state locking.
-4. Configure credentials (profile or IAM role) so Terraform can read/write state.
+Edit `_config.yml` with your site info, write posts in `_posts/`, then build:
+
+```bash
+jekyll build   # outputs to _site/
+```
+
+Keep `_site` in `.gitignore` — we sync it to S3 separately.
 
 ---
 
-## 3  Infrastructure as Code
-Here are the key Terraform files. You can grab the complete versions from [my repo](https://github.com/gpayne9/guydevops.com/tree/c83d1761ea1f453e7167c5e36449f4d56a26793c/terraform).
+## 2. Set Up Remote State
+
+Before writing any Terraform:
+
+1. Create a private S3 bucket (mine is called `guy-terraform-state`)
+2. Enable versioning for state history
+3. Optionally add a DynamoDB table for state locking
+
+---
+
+## 3. Terraform
+
+Here are the key files. Full source is in [my repo](https://github.com/gpayne9/guydevops.com/tree/master/terraform).
 
 <details>
 <summary><strong>main.tf</strong></summary>
@@ -176,14 +146,14 @@ provider "aws" {
 </details>
 
 <details>
-<summary><strong>s3.tf — Static‑Site Bucket (existing name preserved)</strong></summary>
+<summary><strong>s3.tf — Bucket with Referer-based access policy</strong></summary>
 
 <div markdown="1">
 
 ```hcl
 variable "secret_header" {
   type    = string
-  default = "secret-header"   # keep secret this is to prevent direct access to the bucket
+  default = "secret-header"   # prevents direct bucket access
 }
 
 variable "site_path" {
@@ -192,7 +162,7 @@ variable "site_path" {
 }
 
 resource "aws_s3_bucket" "guydevops-com_s3_bucket" {
-  bucket = "guydevops.com"   # DO NOT CHANGE
+  bucket = "guydevops.com"
   tags   = { Name = "guydevops", Environment = "prod" }
 }
 
@@ -201,7 +171,8 @@ resource "aws_s3_bucket_website_configuration" "guydevops-com_s3_bucket_website"
   index_document { suffix = "index.html" }
 }
 
-# Bucket policy allows only CloudFront (Referer header) to read
+# Only allow reads when the Referer header matches.
+# CloudFront injects this header on every origin request.
 resource "aws_s3_bucket_policy" "allow_public_access_to_site" {
   bucket = aws_s3_bucket.guydevops-com_s3_bucket.id
   policy = data.aws_iam_policy_document.allow_public_access_to_site_policy.json
@@ -223,7 +194,7 @@ data "aws_iam_policy_document" "allow_public_access_to_site_policy" {
   }
 }
 
-# Quick‑and‑dirty deploy — replace with CI for production!
+# Syncs the built site to S3 on every terraform apply
 resource "null_resource" "remove_and_upload_to_s3" {
   triggers    = { always_run = timestamp() }
   provisioner "local-exec" {
@@ -236,7 +207,7 @@ resource "null_resource" "remove_and_upload_to_s3" {
 </details>
 
 <details>
-<summary><strong>acm_cert.tf</strong></summary>
+<summary><strong>acm_cert.tf — TLS certificate with DNS validation</strong></summary>
 
 <div markdown="1">
 
@@ -275,6 +246,8 @@ resource "aws_acm_certificate_validation" "guydevops_cert_validation" {
 </details>
 
 ### cloudfront.tf
+
+CloudFront uses a custom origin (the S3 website endpoint, not the REST API endpoint) and injects the secret Referer header so the bucket policy allows the request through.
 
 ```hcl
 resource "aws_cloudfront_distribution" "guydevops_cf_dis" {
@@ -335,75 +308,53 @@ resource "aws_route53_record" "guydevops_record" {
 
 ---
 
-## 4  Deploy <i class="fas fa-rocket"></i>
+## 4. Deploy
+
 ```bash
 jekyll build          # generate _site/
-terraform init        # download providers & configure backend
-terraform plan        # review infra changes
-terraform apply       # confirm & provision
+terraform init        # pull providers, configure backend
+terraform plan        # review what gets created
+terraform apply       # provision everything
 ```
-Provisioning takes **≈5 minutes**.
+
+Takes about 5 minutes. Most of that is CloudFront distribution deployment.
 
 ---
 
-## 5  Automate Updates
-Add a GitHub Actions workflow that:
-1. Checks out your repo.
-2. Caches Ruby gems.
-3. Runs `jekyll build`.
-4. Uploads the `_site` folder to an artifact or directly to S3.
-5. Executes `terraform apply -auto-approve`.
+## 5. Automate Deployments
+
+Instead of running `terraform apply` every time you publish a post, set up GitHub Actions to build the site and sync to S3 on push. I have a [deploy workflow](https://github.com/gpayne9/guydevops.com/blob/master/.github/workflows/ci.yml) that does this using OIDC for AWS authentication — no static credentials needed.
 
 ---
 
-## Cost Snapshot <i class="fas fa-coins"></i>
+## What It Costs
 
-<div align="center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin: 1rem 0;">
-  <h3 style="color: white; margin: 0 0 1rem 0;"><i class="fas fa-dollar-sign"></i> Ultra-Low Cost Hosting</h3>
-  <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">< $2/month</div>
-  <div style="opacity: 0.9;">For most personal sites & portfolios</div>
-</div>
+| Resource | Monthly |
+|---|---|
+| S3 Storage (1 GB) | $0.02 |
+| CloudFront (10 GB transfer) | $0.85 |
+| ACM Certificate | Free |
+| Route 53 Hosted Zone | $0.50 |
+| **Total** | **< $2/month** |
 
-**Monthly cost breakdown:**
-- **S3 Storage (1 GB):** $0.023
-- **CloudFront (10 GB out):** $0.85 (US East prices)
-- **SSL Certificate (ACM):** FREE
-- **Route 53 Hosted Zone:** $0.50
-- **Total: < $2/month** <i class="fas fa-dollar-sign" style="color: #28a745;"></i>
-
-> <i class="fas fa-lightbulb" style="color: #ffc107;"></i> **Cost Note:** This assumes moderate traffic (10GB/month CloudFront data transfer). For higher traffic, costs scale linearly but remain very affordable compared to traditional hosting.
+Assumes moderate traffic. Even at higher volumes, static hosting on AWS stays cheap.
 
 ---
 
-## Wrapping Up <i class="fas fa-trophy"></i>
+## Wrapping Up
 
-<div align="center" style="background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.3); padding: 2rem; border-radius: 12px; margin: 2rem 0;">
-  <h3 style="color: #28a745; margin-top: 0;"><i class="fas fa-rocket"></i> That's a Wrap!</h3>
-  <p style="color: var(--text-color, #333);">Your Jekyll site is now running on a <strong>secure, CDN‑accelerated stack</strong> that delivers enterprise-grade performance for under $2/month.</p>
-</div>
+You end up with a static site on a global CDN with auto-renewing TLS, managed entirely through Terraform. No servers to patch, nothing to scale, and it costs less than a coffee.
 
-### <i class="fas fa-check-circle" style="color: #28a745;"></i> What We Built:
-You’ve built a **secure, CDN‑accelerated Jekyll site** that:
+Some things worth adding:
+- **www subdomain** — add it as a CloudFront alias with a redirect
+- **CloudWatch alarms** — get notified on 4xx/5xx spikes
+- **WAF** — if you want DDoS protection beyond what CloudFront provides by default
 
-- **Global reach** — CloudFront serves content from 400+ edge locations worldwide
-- **Dirt cheap hosting** — Under $2/month for most personal sites
-- **Zero server maintenance** — No patching, no monitoring, no headaches
-- **Everything in Git** — Infrastructure and content both version controlled
-- **SSL by default** — Free certificates that renew automatically
-
-### Next Steps
-- **Custom domain**: Add `www.guydevops.com` as an alias in CloudFront
-- **CI/CD**: Replace the `null_resource` with GitHub Actions for automated deployments
-- **Monitoring**: Add CloudWatch alarms for 4xx/5xx errors
-- **Performance**: Enable Gzip compression and optimize images
-- **Security**: Consider adding AWS WAF for DDoS protection
-
-### Troubleshooting
-- **CloudFront cache**: Changes may take 5-15 minutes to propagate globally
-- **DNS propagation**: Route 53 changes can take up to 48 hours
-- **Jekyll build errors**: Check Ruby version compatibility (3.1-3.2 recommended)
+**Troubleshooting notes:**
+- CloudFront cache changes can take 5-15 minutes to propagate (or invalidate manually)
+- Route 53 DNS changes can take up to 48 hours
+- If Jekyll builds fail, check Ruby version — stick with 3.1 or 3.2
 
 ---
 
-*Questions or run into issues? Hit me up on [GitHub](https://github.com/gpayne9) or [LinkedIn](https://linkedin.com/in/guypayne9). <i class="fas fa-rocket"></i>*
-
+*Questions? Find me on [GitHub](https://github.com/gpayne9) or [LinkedIn](https://linkedin.com/in/guy-p-devops).*
