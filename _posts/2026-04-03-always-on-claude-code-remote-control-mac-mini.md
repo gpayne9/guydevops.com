@@ -11,29 +11,24 @@ categories: [Tutorials, AI, Infrastructure]
   <h3 style="color: #666; margin-bottom: 1rem;"><i class="fas fa-satellite-dish"></i> Tech Stack</h3>
   <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap: wrap;">
     <div style="text-align: center;">
-      <div style="background: #f0f0f0; border-radius: 16px; padding: 12px; display: inline-block;">
-        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg" alt="Mac Mini" width="80"/>
+      <div style="background: #f0f0f0; border-radius: 16px; width: 104px; height: 104px; display: inline-flex; align-items: center; justify-content: center; background-image: url('https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg'); background-size: 80px; background-repeat: no-repeat; background-position: center;">
       </div>
       <br><small><strong>Mac Mini</strong></small>
     </div>
     <div style="text-align: center;">
-      <div style="background: #f0f0f0; border-radius: 16px; padding: 12px; display: inline-block;">
-        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/claude.svg" alt="Claude Code" width="80" style="filter: invert(45%) sepia(90%) saturate(500%) hue-rotate(350deg)"/>
+      <div style="background: #f0f0f0; border-radius: 16px; width: 104px; height: 104px; display: inline-flex; align-items: center; justify-content: center; background-image: url('https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/claude.svg'); background-size: 80px; background-repeat: no-repeat; background-position: center;">
       </div>
       <br><small><strong>Claude Code</strong></small>
     </div>
     <div style="text-align: center;">
-      <div style="background: #f0f0f0; border-radius: 16px; padding: 12px; display: inline-block;">
-        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg" alt="Bash" width="80"/>
+      <div style="background: #f0f0f0; border-radius: 16px; width: 104px; height: 104px; display: inline-flex; align-items: center; justify-content: center; background-image: url('https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg'); background-size: 80px; background-repeat: no-repeat; background-position: center;">
       </div>
       <br><small><strong>Bash + tmux</strong></small>
     </div>
   </div>
 </div>
 
-<div align="center" style="margin: 0 0 2rem 0;">
-  <img src="/assets/img/claude-always-on-banner.svg" alt="Claude Always-On Architecture" style="max-width: 100%; border-radius: 12px;"/>
-</div>
+![Claude Always-On Architecture](/assets/img/claude-always-on-banner.png){: .w-100 .no-popup }
 
 Claude Code's remote control feature lets you connect to a running CLI session from claude.ai, the Claude desktop app, or the Claude mobile app. The session runs on your machine with full filesystem and tool access — the remote device is just a window into it.
 
