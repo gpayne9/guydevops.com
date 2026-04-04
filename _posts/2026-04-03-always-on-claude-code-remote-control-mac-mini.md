@@ -18,7 +18,7 @@ categories: [Tutorials, AI, Infrastructure]
     </div>
     <div style="text-align: center;">
       <div style="background: #f0f0f0; border-radius: 16px; padding: 12px; display: inline-block;">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/1024px-Claude_AI_logo.svg.png" alt="Claude Code" width="80"/>
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/claude.svg" alt="Claude Code" width="80" style="filter: invert(45%) sepia(90%) saturate(500%) hue-rotate(350deg)"/>
       </div>
       <br><small><strong>Claude Code</strong></small>
     </div>
@@ -32,7 +32,7 @@ categories: [Tutorials, AI, Infrastructure]
 </div>
 
 <div align="center" style="margin: 0 0 2rem 0;">
-  <img src="https://raw.githubusercontent.com/gpayne9/claude-always-on/main/assets/banner.svg" alt="Claude Always-On Architecture" style="max-width: 100%; border-radius: 12px;"/>
+  <img src="/assets/img/claude-always-on-banner.svg" alt="Claude Always-On Architecture" style="max-width: 100%; border-radius: 12px;"/>
 </div>
 
 Claude Code's remote control feature lets you connect to a running CLI session from claude.ai, the Claude desktop app, or the Claude mobile app. The session runs on your machine with full filesystem and tool access — the remote device is just a window into it.
