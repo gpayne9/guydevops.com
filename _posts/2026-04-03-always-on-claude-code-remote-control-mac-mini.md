@@ -28,8 +28,6 @@ categories: [Tutorials, AI, Infrastructure]
   </div>
 </div>
 
-![Claude Always-On Architecture](/assets/img/claude-always-on-banner.png){: .w-100 .no-popup }
-
 Claude Code's remote control feature lets you connect to a running CLI session from claude.ai, the Claude desktop app, or the Claude mobile app. The session runs on your machine with full filesystem and tool access — the remote device is just a window into it.
 
 The problem is that `claude remote-control` is a foreground process. Close your terminal, reboot, or lose network for ~10 minutes, and the session dies. I built [claude-always-on](https://github.com/gpayne9/claude-always-on) to solve this — persistent, self-healing remote control sessions that survive reboots and recover automatically.
