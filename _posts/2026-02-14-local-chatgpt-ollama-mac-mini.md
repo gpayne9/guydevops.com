@@ -75,7 +75,7 @@ flowchart TD
     subgraph mac["🖥️ Mac mini M4"]
         ollama["Ollama Server<br/>Port 11434"]
         gpu["Apple Metal GPU<br/>Unified Memory"]
-        models["Local Models<br/>Qwen 14B · Llama 8B<br/>CodeLlama · Mistral"]
+        models["Local Models<br/>Qwen3 14B · Llama 3.3 8B<br/>Qwen3-Coder · Mistral"]
         ollama --> gpu --> models
     end
 
@@ -106,10 +106,10 @@ The request flow: you open the chat UI in a browser → Open WebUI sends the pro
 
 ```bash
 brew install ollama
-ollama pull qwen2.5:14b-instruct-q4_K_M
+ollama pull qwen3:14b-q4_K_M
 ```
 
-That downloads a 9GB quantized 14B parameter model. On the M4, it runs at 30-60 tokens/sec — fast enough that responses feel instant for most conversations. If you want something snappier, an 8B model like Llama 3 hits 60-100 tokens/sec.
+That downloads a 9GB quantized 14B parameter model. On the M4, it runs at 30-60 tokens/sec — fast enough that responses feel instant for most conversations. If you want something snappier, an 8B model like Llama 3.3 hits 60-100 tokens/sec. Llama 4 launched in April 2026, but Scout (109B MoE) won't fit in 16 GB unified memory — stick with Llama 3.x or a Qwen3 8B for this hardware tier.
 
 ### Enable Remote Access
 
@@ -133,9 +133,9 @@ This is safe because Tailscale handles access control — Ollama is only reachab
 
 | Model | Size | Speed (M4) | Good For |
 |---|---|---|---|
-| `qwen2.5:14b-instruct-q4_K_M` | 9GB | 30-60 tok/s | General use, coding, writing |
-| `llama3:8b` | 4.7GB | 60-100 tok/s | Fast responses, lighter tasks |
-| `codellama:13b` | 7.4GB | 35-50 tok/s | Code generation and review |
+| `qwen3:14b-q4_K_M` | 9GB | 30-60 tok/s | General use, coding, writing |
+| `llama3.3:8b` | 4.7GB | 60-100 tok/s | Fast responses, lighter tasks |
+| `qwen3-coder:14b` | 9GB | 30-50 tok/s | Code generation and review |
 | `mistral:7b` | 4.1GB | 70-100 tok/s | Quick and capable |
 
 The Mac mini's 16GB unified memory limits you to roughly 14B parameter models at Q4 quantization. Anything bigger starts swapping and performance tanks.
@@ -255,9 +255,9 @@ I use it for code review, writing drafts, brainstorming, and quick lookups. The 
 
 | Model | Hardware | Tokens/sec | Notes |
 |---|---|---|---|
-| Qwen 2.5 14B (Q4) | Mac mini M4 | 30-60 | My daily driver |
-| Llama 3 8B | Mac mini M4 | 60-100 | Faster, slightly less capable |
-| Qwen 2.5 14B (Q4) | RTX 4080 | 80-120 | If you have a GPU box |
+| Qwen3 14B (Q4) | Mac mini M4 | 30-60 | My daily driver |
+| Llama 3.3 8B | Mac mini M4 | 60-100 | Faster, slightly less capable |
+| Qwen3 14B (Q4) | RTX 4080 | 80-120 | If you have a GPU box |
 
 The M4 hits a good sweet spot. It's fast enough for interactive use, silent, and draws about 10W at idle. Compared to running an RTX 4080 (350W+ under load), it's a no-brainer for an always-on setup.
 
@@ -311,7 +311,7 @@ Compare that to ChatGPT Plus at $20/month or API costs that scale with usage. Th
 ## Getting Started
 
 1. Install Ollama on your Mac: `brew install ollama`
-2. Pull a model: `ollama pull qwen2.5:14b-instruct-q4_K_M`
+2. Pull a model: `ollama pull qwen3:14b-q4_K_M`
 3. Enable remote access: `launchctl setenv OLLAMA_HOST "0.0.0.0:11434"`
 4. Install Tailscale on the Mac and Pi
 5. Deploy Open WebUI on the Pi (or the Mac), pointed at the Mac's Tailscale IP

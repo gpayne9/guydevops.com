@@ -124,13 +124,13 @@ Both tools handle this workflow well once you've given them full access and clea
 
 **Claude Code strengths in this workflow:**
 - Sub-agents run in parallel: it might check AWS and GitLab simultaneously
-- 1M token context window (Max plans) holds the entire investigation without compaction
+- 1M token context window (available on Pro, Max, Team, Enterprise) holds the entire investigation without compaction
 - Persistent bash session: environment variables, auth tokens, and directory state carry across commands
 - Plan Mode lets you run the whole investigation read-only, with zero risk of modification
 
 **Codex strengths in this workflow:**
-- Faster response generation: GPT-5 outputs at ~150 tokens/sec, noticeably faster than Claude Opus
-- Cheaper per investigation: GPT-5 input tokens cost ~$1.25/M vs Claude Opus at $5/M
+- Faster response generation: GPT-5.3-Codex outputs at ~70 tokens/sec, and the Spark variant on Cerebras hardware exceeds 1,000 tokens/sec for high-speed tasks
+- Cheaper per investigation: GPT-5.3-Codex input tokens cost $1.75/M vs Claude Opus 4.7 at $5/M (and Opus 4.7's new tokenizer counts ~0–35% more tokens for the same text)
 - Thread-per-investigation model: spin up three parallel investigations, review all of them from the desktop dashboard
 - Open-source (Apache-2.0): if the agent does something unexpected, you can trace exactly what happened
 
@@ -168,9 +168,9 @@ When investigating staging failures:
 6. Present findings as: root cause, affected systems, recommended fix
 ```
 
-Claude Code also recently shipped Skills 2.0 with automatic evals and A/B testing — you can define test prompts and expected outputs to validate that a skill actually works before sharing it with your team.
+Claude Code shipped Skills 2.0 in spring 2026 with automatic evals and blind A/B testing — you can define test prompts and expected outputs, and Claude runs each skill loaded vs. unloaded so you see exactly where it helps and where it doesn't. Reported success rates jumped from ~45% (no testing) to ~94% (evals + A/B test).
 
-Codex has its own skills system that loads from `$REPO_ROOT/.agents/skills/` and follows progressive disclosure (metadata first, full content on activation). It also supports `@plugin` mentions for quick invocations. The systems are converging — both use SKILL.md files based on the same open standard — but Claude Code's implementation is more mature and has a larger ecosystem as of March 2026.
+Codex has its own skills system that loads from `$REPO_ROOT/.agents/skills/` and follows progressive disclosure (metadata first, full content on activation). It also supports `@plugin` mentions for quick invocations. The systems are converging — both use SKILL.md files based on the same open standard — but Claude Code's implementation is more mature and has a larger ecosystem.
 
 ---
 
@@ -302,14 +302,14 @@ If your primary git platform is GitLab or ADO, the remote/web features of both t
 
 ## Cost
 
-| | Claude Opus 4.6 | Claude Sonnet 4.6 | GPT-5 (Codex) | codex-mini |
+| | Claude Opus 4.7 | Claude Sonnet 4.6 | GPT-5.3-Codex | GPT-5.3-Codex-Spark |
 |---|---|---|---|---|
-| **Input** | $5/M tokens | $3/M tokens | $1.25/M tokens | $1.50/M tokens |
-| **Output** | $25/M tokens | $15/M tokens | $10/M tokens | $6/M tokens |
-| **Typical investigation** | $2–8 | $0.50–3 | $0.25–2 | $0.15–1 |
+| **Input** | $5/M tokens | $3/M tokens | $1.75/M tokens | Speed-tier pricing |
+| **Output** | $25/M tokens | $15/M tokens | $14/M tokens | Speed-tier pricing |
+| **Typical investigation** | $2–8 | $0.50–3 | $0.40–2 | Lower per-task, higher tok/sec |
 | **Subscription** | Pro $20/mo, Max $100–200/mo | Same | Plus $20/mo, Pro $200/mo | Same |
 
-Claude Code uses roughly 4x more tokens per task than Codex — it produces more thorough, documented output, but you pay for that thoroughness. For a quick "what's the status of this ECS service?" query, Codex is significantly cheaper. For a complex cross-system investigation where you want the agent to get it right the first time, the Claude premium is often worth it.
+Opus 4.7's per-token price is unchanged from 4.6, but its updated tokenizer counts ~0–35% more tokens for the same input text — so expect slightly higher real-world bills on identical workloads. Claude Code still uses roughly 4x more tokens per task than Codex — it produces more thorough, documented output, but you pay for that thoroughness. For a quick "what's the status of this ECS service?" query, Codex is significantly cheaper. For a complex cross-system investigation where you want the agent to get it right the first time, the Claude premium is often worth it.
 
 ---
 
@@ -336,7 +336,7 @@ Giving an AI agent full access to your cloud environment sounds scary. In practi
 | Writing Terraform modules from a spec | **Either** | Both are strong at IaC generation |
 | Reviewing inline diffs in VS Code | **Either** | Both have capable extensions |
 | Managing investigations from your phone | **Claude Code** | Remote Control + mobile app, no Codex equivalent |
-| Cost-sensitive high-volume scripting | **Codex** | 4x cheaper input tokens, 2.5x faster output |
+| Cost-sensitive high-volume scripting | **Codex** | ~2.9x cheaper input tokens, ~1.8x cheaper output (Spark variant goes far higher on speed) |
 | Codifying team debugging runbooks | **Claude Code** | Skills system is more mature, supports evals |
 | Open-source requirement | **Codex** | Apache-2.0 licensed, fully inspectable Rust codebase |
 | Azure DevOps workflows | **Either** | Neither has first-party ADO integration; both run `az devops` CLI |

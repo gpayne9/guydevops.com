@@ -81,13 +81,13 @@ Running `claude remote-control` directly works fine when you're sitting at the m
 
 1. **It's a foreground process.** Close the terminal, it dies. Reboot, it's gone.
 2. **macOS aggressively sleeps headless Macs.** System sleep, disk sleep, and App Nap will all kill or throttle your sessions when the display is off.
-3. **No built-in daemon mode.** There's an [open GitHub issue](https://github.com/anthropics/claude-code/issues/30447) requesting `--headless` support for systemd/Docker, but it's marked stale with no Anthropic response. The workaround is tmux.
+3. **No built-in daemon mode.** There's an [open GitHub issue](https://github.com/anthropics/claude-code/issues/30447) requesting `--headless` support for systemd/Docker — still open as of May 2026, with recent activity but no shipped fix. The workaround is tmux.
 
 ---
 
 ## What claude-always-on Does
 
-The [claude-always-on](https://github.com/gpayne9/claude-always-on) repo handles all of this with four scripts:
+The [claude-always-on](https://github.com/gpayne9/claude-always-on) repo handles all of this with six scripts:
 
 | Script | What It Does |
 |--------|-------------|

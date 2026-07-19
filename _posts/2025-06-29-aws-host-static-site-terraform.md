@@ -32,7 +32,7 @@ This is how I set up [guydevops.com](https://guydevops.com) — a Jekyll blog si
 |---|---|
 | Patching, scaling, paying for servers | Jekyll produces static HTML. No servers to manage. |
 | Click-ops and config drift | Terraform codifies the infrastructure. Version-controlled and reviewable. |
-| Slow loads for visitors far from origin | CloudFront caches at 400+ edge locations. |
+| Slow loads for visitors far from origin | CloudFront caches at 750+ edge POPs (plus 1,140+ embedded ISP POPs). |
 | TLS certificate renewals | ACM issues free certs and auto-renews them. |
 | Vendor lock-in | It's static files. Move them to Netlify, Vercel, or anywhere else whenever. |
 
@@ -74,9 +74,9 @@ Everything lives in **us-east-1** because CloudFront requires ACM certificates i
 
 ## Prerequisites
 
-- Ruby 3.1 or 3.2 — 3.3+ has stdlib changes that break Jekyll 4.x
+- Ruby 3.2, 3.3, or 3.4 — Jekyll 4.3+ supports all three. On Ruby 3.4 you'll need to add `csv` and `base64` to your `Gemfile` since they were removed from stdlib
 - AWS account with IAM access
-- AWS CLI and Terraform >= 1.2
+- AWS CLI and Terraform >= 1.5
 - A registered domain with a Route 53 hosted zone
 
 ---
@@ -126,7 +126,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 6.0"
     }
   }
   backend "s3" {
@@ -134,7 +134,7 @@ terraform {
     key    = "terraform"
     region = "us-east-1"
   }
-  required_version = ">= 1.2.0"
+  required_version = ">= 1.5.0"
 }
 
 provider "aws" {
@@ -306,6 +306,13 @@ resource "aws_route53_record" "guydevops_record" {
 }
 ```
 
+> **If you're starting fresh in 2026, prefer these modern patterns:**
+> - **Origin Access Control (OAC)** instead of the Referer-secret approach. OAC uses SigV4 signing with an `AWS:SourceArn` condition on the bucket policy — short-lived credentials, no shared secret in your repo, supports SSE-KMS, and works in all regions. AWS [explicitly recommends OAC over OAI/Referer](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) for new setups.
+> - **Managed cache policies** (e.g. the `CachingOptimized` policy ID `658327ea-f89d-4fab-a63d-7e88639e58f6`) instead of the deprecated `forwarded_values` block. Set `cache_policy_id` on `default_cache_behavior` and drop `forwarded_values` entirely.
+> - **HTTP/3** is on by default in v6 of the AWS provider when you set `http_version = "http2and3"`. Worth turning on for a measurable latency win.
+>
+> Switching to OAC means the S3 origin uses the REST endpoint (`bucket_regional_domain_name`) instead of the website endpoint, so you lose S3's built-in index document behavior for subpaths. The usual fix is a small CloudFront Function that rewrites `/path/` to `/path/index.html`.
+
 ---
 
 ## 4. Deploy
@@ -353,7 +360,8 @@ Some things worth adding:
 **Troubleshooting notes:**
 - CloudFront cache changes can take 5-15 minutes to propagate (or invalidate manually)
 - Route 53 DNS changes can take up to 48 hours
-- If Jekyll builds fail, check Ruby version — stick with 3.1 or 3.2
+- If Jekyll builds fail on Ruby 3.4, add `gem "csv"` and `gem "base64"` to your `Gemfile` — those libraries were removed from stdlib in 3.4
+- If you're on Ruby 3.3 with the `github-pages` gem, you may hit dependency conflicts — pin to `jekyll ~> 4.3` directly instead of going through `github-pages`
 
 ---
 

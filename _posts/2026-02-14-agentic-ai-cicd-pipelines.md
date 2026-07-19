@@ -81,7 +81,7 @@ This isn't a future-state roadmap. These are shipping products.
 
 GitHub's agent can be assigned an issue, spin up an ephemeral dev environment via GitHub Actions, explore the codebase, make changes, run tests and linters, push commits to a draft PR, and request human review. It also does agentic code review powered by CodeQL — identifying issues and applying fixes directly in PRs.
 
-The newer **AgentHQ** (announced at GitHub Universe 2025) adds a control plane for orchestrating multiple AI agents integrated with Actions workflows.
+**Agent HQ** (announced at GitHub Universe 2025, now generally available) adds a control plane for orchestrating multiple AI agents — Anthropic, OpenAI, Google, Cognition, xAI — through one subscription, with full audit trail and native Actions integration. The VS Code 1.110 release in March 2026 surfaced agent plugins as a preview at the IDE layer.
 
 ### Amazon Q Developer
 
@@ -105,7 +105,7 @@ Autonomously generates and validates security fixes in PRs. Verifies that fixes 
 
 ### The Smaller Players Worth Knowing
 
-- **CodeRabbit** — AI code review across 2M+ repos, 13M+ PRs reviewed. Runs 35+ linters agenically per PR using GPT-4.5 and Claude Opus 4.
+- **CodeRabbit** — AI code review across 2M+ repos, 13M+ PRs reviewed. Runs 35+ linters agentically per PR using an ensemble of frontier models including Claude Opus 4.7 (added April 2026) and GPT-5.3-Codex.
 - **Nx Cloud** — Self-healing CI that auto-commits fixes when the AI is confident the fix is verified.
 - **Gitar** — Detects linting errors and test failures, creates fixes, commits to PR branches. Claims 17+ hours saved weekly.
 - **Dagger** — Framework for self-healing pipelines with AI agents (from the creators of Docker).
