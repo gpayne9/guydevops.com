@@ -34,6 +34,8 @@ The problem is that `claude remote-control` is a foreground process. Close your 
 
 This post covers how it works, why certain decisions were made, and what the broader community is doing with remote control setups.
 
+> **Update (July 2026):** The scripts got a v2 refactor after the setup failed silently for the dumbest possible reason — my claude.ai login expired, and every session just churned `401 ... Please use /login` every 10 seconds with nobody watching. v2 detects auth failures, slows down retries, and fires a macOS notification telling you to re-login (then recovers on its own once you do). The restart loop also moved into a single `run-session.sh` shared by the start script and the monitor, and the monitor now checks that the *loop* is alive rather than claude itself — so it no longer kills a healthy session that's just waiting out its backoff window. Details below are updated to match.
+
 ---
 
 ## How Remote Control Actually Works
@@ -89,24 +91,32 @@ The [claude-always-on](https://github.com/gpayne9/claude-always-on) repo handles
 
 | Script | What It Does |
 |--------|-------------|
-| `start.sh` | Creates tmux sessions per repo, runs `claude remote-control` in a restart loop, starts caffeinate, disables App Nap |
-| `monitor.sh` | Checks every 5 minutes that all sessions are alive with running claude processes. Restarts dead ones and sends macOS notifications. |
+| `run-session.sh` | The restart loop that runs inside each tmux session — exponential backoff, auth-failure detection |
+| `start.sh` | Creates tmux sessions per repo, starts caffeinate, disables App Nap. `--status` shows per-session health |
+| `monitor.sh` | Checks every 5 minutes that each session's restart loop is alive. Restarts dead ones, sends macOS notifications — including a deduped "re-login needed" alert on auth failures |
 | `install.sh` | Generates and loads LaunchAgents so everything starts on login and monitoring runs automatically |
 | `test.sh` | Diagnostic script that verifies pmset, App Nap, caffeinate, tmux sessions, and power assertions. Has a `--simulate` mode that forces display sleep and re-checks. |
+| `lib.sh` | Shared helpers sourced by everything else — config parsing, health checks, and the one place sessions get created |
 
 ### The Core Idea: Restart Loop
 
-The key is a `while true` loop inside each tmux session:
+The key is a restart loop (`run-session.sh`) running as the pane command inside each tmux session. Simplified:
 
 ```bash
+delay=10
 while true; do
-  claude remote-control --name "my-project" --spawn same-dir
-  echo 'Claude exited, restarting in 10s...'
-  sleep 10
+  claude remote-control --name "my-project" --spawn same-dir 2>>"$SESSION_LOG"
+  # fast exit? check captured stderr for auth errors (401 / "/login")
+  #   -> auth failure: record state, retry every 300s, monitor notifies you
+  #   -> anything else: exponential backoff (10s -> 20s -> ... -> 300s)
+  # ran >60s? healthy: reset backoff, clear auth state
+  sleep "$delay"
 done
 ```
 
-If Claude exits for any reason — crash, auth timeout, network blip — it waits 10 seconds and restarts. The health monitor catches cases where the tmux session itself dies.
+If Claude exits for any reason — crash, network blip — it backs off and restarts. If it exits because your claude.ai login expired, the loop notices, stops hammering, and the monitor sends a macOS notification telling you to run `/login`; the moment you do, the next retry succeeds and the state clears itself. The health monitor catches the remaining case: the tmux session or the loop itself dying.
+
+Worth knowing: since v2.1, `claude remote-control` is a persistent multi-session server (`--spawn same-dir|worktree`, 32 concurrent sessions) and newer builds auto-reconnect after network drops — so the loop's job is genuinely just crash and auth recovery now. There's still no official daemon mode, which is why this setup exists at all.
 
 ### Session Config
 
